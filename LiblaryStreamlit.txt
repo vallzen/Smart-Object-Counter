@@ -1,0 +1,8 @@
+wajib di install di open shell thonny dengan perintah "pip install (nama liblary di Bawah ini)"
+streamlit
+opencv-python-headless
+numpy
+matplotlib
+pandas
+xlsxwriter
+requests
