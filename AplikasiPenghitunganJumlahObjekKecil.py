@@ -6,16 +6,23 @@ import pandas as pd
 import io
 import requests
 
-# --- 1. KONFIGURASI HALAMAN ---
+# ==========================================
+# 1. KONFIGURASI HALAMAN
+# ==========================================
+# Mengatur judul tab browser, layout wide (lebar), dan state sidebar
 st.set_page_config(
     layout="wide",
     page_title="Smart Object Counter Pro",
     initial_sidebar_state="expanded"
 )
 
-# --- 2. DEFINISI TEMA (SORTED: CYBERPUNK FIRST + A-Z) ---
+# ==========================================
+# 2. DEFINISI TEMA (DATABASE TEMA)
+# ==========================================
+# Dictionary ini menyimpan konfigurasi warna, font, background, dan shadow.
+# Urutan: Cyberpunk (Default/Pertama), sisanya diurutkan Abjad (A-Z).
 THEMES = {
-    # 1. DEFAULT THEME (Tetap Paling Atas)
+    # --- TEMA DEFAULT (Tetap Paling Atas) ---
     "🤖 Cyberpunk HUD": {
         "primary": "#00f2ff", "secondary": "#bc13fe", "bg_col": "#050a14", "text": "#e0f2fe",
         "card_bg": "rgba(16, 23, 41, 0.7)", "border": "rgba(0, 242, 255, 0.2)",
@@ -23,7 +30,7 @@ THEMES = {
         "gradient": "linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px)"
     },
 
-    # 2. ALPHABETICAL ORDER (A-Z)
+    # --- TEMA LAINNYA (URUTAN A-Z) ---
     "🦇 Batman": {
         "primary": "#fbbf24", "secondary": "#4b5563", "bg_col": "#0f172a", "text": "#9ca3af",
         "card_bg": "rgba(31, 41, 55, 0.9)", "border": "rgba(75, 85, 99, 0.6)",
@@ -119,7 +126,7 @@ THEMES = {
     "🕷️ Spider-Man": {
         "primary": "#ef4444", "secondary": "#3b82f6", 
         "bg_col": "#450a0a", 
-        "sidebar_bg": "#172554",
+        "sidebar_bg": "#172554", # Background khusus sidebar (Biru Celana Spiderman)
         "text": "#ffffff",
         "card_bg": "rgba(23, 37, 84, 0.9)", 
         "border": "rgba(239, 68, 68, 0.5)",
@@ -148,32 +155,37 @@ THEMES = {
     }
 }
 
-# --- 3. INIT SESSION STATE UNTUK TEMA ---
+# ==========================================
+# 3. MANAJEMEN SESSION STATE
+# ==========================================
+# Memastikan tema tersimpan meski halaman direfresh atau ada interaksi
 if 'current_theme' not in st.session_state:
     st.session_state.current_theme = "🤖 Cyberpunk HUD"
 
-# --- 4. CSS GENERATOR FUNCTION ---
+# ==========================================
+# 4. FUNGSI INJEKSI CSS (STYLING DINAMIS)
+# ==========================================
 def inject_css(theme_name):
     t = THEMES[theme_name]
     
-    # Logic background size
+    # Logika khusus untuk ukuran background (hanya untuk tema tertentu agar tekstur pas)
     bg_size = "30px 30px"
     if theme_name == "☢️ Toxic Wasteland":
         bg_size = "40px 40px"
     if theme_name == "🌅 Synthwave Sunset":
         bg_size = "100% 100%, 50px 50px, 50px 50px"
     
-    # Logic Sidebar Background (Jika ada key 'sidebar_bg', pakai itu. Jika tidak, pakai 'bg_col')
+    # Logika Warna Sidebar: Jika tema punya 'sidebar_bg', pakai itu. Jika tidak, pakai warna 'bg_col'.
     sidebar_bg = t.get('sidebar_bg', t['bg_col'])
         
     st.markdown(f"""
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
-    /* LOAD SEMUA GOOGLE FONTS + FREDOKA ONE + METAL MANIA (SPIDEY) */
+    /* Mengimpor Font dari Google Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto+Mono:wght@400;600&family=Inter:wght@300;400;600&family=VT323&family=Courier+Prime&family=Cinzel:wght@500&family=Cinzel+Decorative&family=Playfair+Display&family=Audiowide&family=Rajdhani:wght@500&family=Black+Ops+One&family=Share+Tech+Mono&family=Russo+One&family=Roboto+Condensed&family=Michroma&family=Montserrat&family=Teko:wght@500&family=Oswald&family=Exo+2:wght@600&family=Lato&family=Righteous&family=Quicksand:wght@500&family=Creepster&family=Crimson+Text&family=Nunito&family=Iceland&family=Roboto&family=Bangers&family=Space+Mono&family=Press+Start+2P&family=Pacifico&family=Special+Elite&family=Alice&family=Racing+Sans+One&family=Rye&family=Nosifer&family=Dancing+Script&family=Merriweather&family=Varela+Round&family=Fredoka+One&family=Metal+Mania&family=Marvel&display=swap');
 
-    /* BACKGROUND UTAMA */
+    /* Mengatur Gaya Halaman Utama */
     .stApp {{
         background-color: {t['bg_col']};
         background-image: {t['gradient']};
@@ -184,12 +196,12 @@ def inject_css(theme_name):
         font-family: '{t['font_body']}', sans-serif;
     }}
     
-    /* PAKSA WARNA LABEL WIDGET */
+    /* Memaksa warna label widget agar sesuai tema */
     .stMarkdown, .stText, p, label, .stWidgetLabel {{
         color: {t['text']} !important;
     }}
 
-    /* HEADERS */
+    /* Mengatur Gaya Header (Judul) */
     h1, h2, h3 {{
         font-family: '{t['font_head']}', sans-serif !important;
         text-transform: uppercase;
@@ -200,19 +212,20 @@ def inject_css(theme_name):
         text-shadow: {t['shadow']};
     }}
     
+    /* Mengatur Sub-header */
     h4, h5, h6 {{
         color: {t['text']} !important;
         opacity: 0.9;
         font-family: '{t['font_head']}', sans-serif !important;
     }}
 
-    /* SIDEBAR */
+    /* Mengatur Sidebar */
     [data-testid="stSidebar"] {{
         background-color: {sidebar_bg};
         border-right: 1px solid {t['border']};
     }}
     
-    /* CUSTOM HUD CARD */
+    /* Kartu HUD (Kotak Kontainer) */
     .hud-card {{
         background: {t['card_bg']};
         border: 1px solid {t['border']};
@@ -232,7 +245,7 @@ def inject_css(theme_name):
         background: linear-gradient(to bottom, {t['primary']}, {t['secondary']});
     }}
 
-    /* --- ANIMASI RUNNING TEXT --- */
+    /* Gaya Teks Berjalan (Marquee) */
     .marquee-container {{
         width: 100%;
         background: {t['card_bg']};
@@ -274,7 +287,7 @@ def inject_css(theme_name):
         100% {{ transform: translate(-100%, 0); }}
     }}
 
-    /* STATISTIK VALUE */
+    /* Gaya Angka Statistik */
     .digital-val {{
         font-family: '{t['font_head']}', monospace;
         font-size: 2rem;
@@ -290,7 +303,7 @@ def inject_css(theme_name):
         letter-spacing: 1px;
     }}
     
-    /* INFO CITRA BOX */
+    /* Kotak Info Citra */
     .info-monitor {{
         background: rgba(125,125,125, 0.1);
         border: 1px solid {t['primary']};
@@ -301,7 +314,7 @@ def inject_css(theme_name):
         font-size: 0.9rem;
     }}
 
-    /* AREA STATS BOX */
+    /* Kotak Area Statistik */
     .area-monitor {{
         background: {t['card_bg']};
         border: 1px dashed {t['secondary']};
@@ -320,7 +333,7 @@ def inject_css(theme_name):
         margin-bottom: 5px;
     }}
 
-    /* TOMBOL */
+    /* Gaya Tombol */
     div[data-testid="stButton"] button {{
         background: transparent;
         color: {t['primary']};
@@ -338,7 +351,7 @@ def inject_css(theme_name):
         box-shadow: 0 0 15px {t['primary']};
     }}
 
-    /* TABS */
+    /* Gaya Tab */
     .stTabs [data-baseweb="tab-list"] {{
         gap: 5px;
         background-color: transparent;
@@ -357,7 +370,7 @@ def inject_css(theme_name):
         border: 1px solid {t['primary']} !important;
     }}
     
-    /* EXPANDER */
+    /* Gaya Expander (Dropdown Info) */
     .streamlit-expanderHeader {{
         background-color: {t['card_bg']};
         color: {t['primary']} !important;
@@ -365,33 +378,40 @@ def inject_css(theme_name):
         border: 1px solid {t['border']};
     }}
     
-    /* POP UP DIALOG */
+    /* Gaya Pop-up Dialog */
     div[role="dialog"] {{
         background: {t['bg_col']} !important;
         border: 1px solid {t['primary']} !important;
         box-shadow: 0 0 50px {t['border']} !important;
     }}
     
-    /* FIX WARNA TEXT DI SIDEBAR INPUT */
+    /* Fix warna teks di inputan sidebar */
     .stSelectbox label, .stSlider label {{
         color: {t['text']} !important;
     }}
     </style>
     """, unsafe_allow_html=True)
 
-# --- 5. SIDEBAR CONTROLS ---
+# ==========================================
+# 5. KONTROL SIDEBAR (INPUT & PARAMETER)
+# ==========================================
 if "selected_theme_name" not in st.session_state:
     st.session_state.selected_theme_name = "🤖 Cyberpunk HUD"
 
 current_t = THEMES[st.session_state.selected_theme_name] 
 
+# Judul Sidebar
 st.sidebar.markdown(f"<h3 style='text-align:center; color:{current_t['primary']}'>SYSTEM CONTROL</h3>", unsafe_allow_html=True)
+
+# Dropdown Pemilihan Tema
 selected_theme = st.sidebar.selectbox("🎨 PILIH TEMA TAMPILAN", list(THEMES.keys()), index=list(THEMES.keys()).index(st.session_state.selected_theme_name))
 
+# Update tema jika berubah
 if selected_theme != st.session_state.selected_theme_name:
     st.session_state.selected_theme_name = selected_theme
     st.rerun()
 
+# Terapkan CSS tema terpilih
 inject_css(st.session_state.selected_theme_name)
 current_t = THEMES[st.session_state.selected_theme_name] 
 
@@ -399,45 +419,50 @@ st.sidebar.markdown("---")
 st.sidebar.info("💡 **TIPS:** Gunakan gambar dengan kontras tinggi untuk akurasi maksimal.")
 st.sidebar.markdown(f"<p style='font-family:{current_t['font_head']}; color:{current_t['primary']};'><i class='fas fa-sliders-h'></i> PARAMETER DETEKSI</p>", unsafe_allow_html=True)
 
+# Slider Parameter
 blur_value = st.sidebar.slider("Tingkat Denoise (Blur)", 1, 15, 9, step=2)
 threshold_value = st.sidebar.slider("Sensitivitas Threshold", 0, 255, 142)
 min_area = st.sidebar.slider("Area Objek Min (px)", 10, 2000, 894)
 
-# --- 6. FUNGSI HEX TO RGB (UNTUK OPENCV) ---
+# ==========================================
+# 6. FUNGSI PEMROSESAN GAMBAR (CORE LOGIC)
+# ==========================================
 def hex_to_rgb(hex_color):
+    """Mengubah kode warna HEX ke Tuple RGB"""
     hex_color = hex_color.lstrip('#')
     return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
-# --- 7. FUNGSI PROCESS ---
 @st.cache_data
 def process_image(file_content, blur_val, thresh_val, min_a, theme_color_hex):
+    # Membaca gambar dari bytes
     file_bytes = np.asarray(bytearray(file_content), dtype=np.uint8)
     img = cv2.imdecode(file_bytes, 1)
-    # Convert BGR (OpenCV Default) ke RGB (Streamlit Display)
+    # Konversi BGR (OpenCV) ke RGB (Tampilan Web)
     img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     
     theme_rgb = hex_to_rgb(theme_color_hex)
     
-    # 1. Grayscale
+    # 1. Grayscale (Hitam Putih)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     
-    # 2. Gaussian Blur
+    # 2. Gaussian Blur (Menghaluskan noise)
     blurred = cv2.GaussianBlur(gray, (blur_val, blur_val), 0)
     
-    # 3. Thresholding (RAW)
+    # 3. Thresholding (Memisahkan objek dari background)
     _, thresh = cv2.threshold(blurred, thresh_val, 255, cv2.THRESH_BINARY_INV)
     
-    # 4. MORPHOLOGY (CLEAN)
+    # 4. Morphology (Membersihkan bintik-bintik kecil)
     kernel = np.ones((3, 3), np.uint8)
     morph = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, iterations=1)
     morph = cv2.morphologyEx(morph, cv2.MORPH_CLOSE, kernel, iterations=1)
     
-    # 5. Contour Detection
+    # 5. Mencari Kontur Objek
     contours, _ = cv2.findContours(morph, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
     valid_contours = [] 
     object_data = []    
     
+    # Filter kontur berdasarkan luas area
     for i, cnt in enumerate(contours):
         area = cv2.contourArea(cnt) 
         if area > min_a:
@@ -457,39 +482,42 @@ def process_image(file_content, blur_val, thresh_val, min_a, theme_color_hex):
                 "Lebar": w, "Tinggi": h
             })
             
+    # Menggambar hasil pada gambar duplikat
     result_img = img_rgb.copy()
     for idx, cnt in enumerate(valid_contours):
-        # 1. GAMBAR BOUNDING BOX (KOTAK) - WARNA SESUAI TEMA
+        # A. Gambar Kotak (Bounding Box) sesuai warna tema
         x, y, w, h = cv2.boundingRect(cnt)
         cv2.rectangle(result_img, (x, y), (x + w, y + h), theme_rgb, 2)
         
-        # 2. GAMBAR KONTUR ASLI (BENTUK OBJEK) - WARNA MERAH TIPIS (RGB: 255, 0, 0)
+        # B. Gambar Kontur Asli (Outline Merah)
         cv2.drawContours(result_img, [cnt], -1, (255, 0, 0), 1)
         
-        # 3. TULIS NOMOR (ID)
+        # C. Tulis Nomor ID (Stroke Hitam + Isi Kuning)
         M = cv2.moments(cnt)
         if M["m00"] != 0:
             cx, cy = int(M["m10"] / M["m00"]), int(M["m01"] / M["m00"])
-            # Stroke Hitam Tebal (Outline) agar teks terbaca di background apapun
             cv2.putText(result_img, str(idx+1), (cx-10, cy-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,0,0), 4)
-            # Text Utama Kuning (RGB: 255, 255, 0)
             cv2.putText(result_img, str(idx+1), (cx-10, cy-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 2)
 
     return img_rgb, result_img, object_data, morph, gray, blurred, thresh
 
+# Fungsi Konversi Gambar ke Bytes (untuk Download)
 def convert_to_bytes(img_array, is_gray=False):
     if is_gray: img_encode = img_array
     else: img_encode = cv2.cvtColor(img_array, cv2.COLOR_RGB2BGR)
     is_success, im_buf_arr = cv2.imencode(".png", img_encode)
     return im_buf_arr.tobytes()
 
+# Fungsi Konversi Dataframe ke Excel
 def convert_df_to_excel(df):
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name='Data Deteksi')
     return output.getvalue()
 
-# --- 8. POP-UP DIALOGS ---
+# ==========================================
+# 7. POP-UP DIALOG DOWNLOAD
+# ==========================================
 @st.dialog("💾 DOWNLOAD SISTEM")
 def interactive_download_popup(img_gray, img_blur, img_mask, img_result, img_thresh):
     if "dl_step" not in st.session_state: st.session_state.dl_step = "pilihan"
@@ -562,10 +590,12 @@ def excel_download_popup(df):
                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", use_container_width=True)
     if c2.button("❌ BATAL", use_container_width=True): st.rerun()
 
-# --- 9. MAIN LAYOUT ---
+# ==========================================
+# 8. TAMPILAN UTAMA (LAYOUT)
+# ==========================================
 st.markdown(f"<h1 style='text-align: center;'>SMART OBJECT COUNTER <span style='font-size:1.5rem; color:{current_t['primary']}; vertical-align: super;'>PRO</span></h1>", unsafe_allow_html=True)
 
-# --- RUNNING TEXT ---
+# Teks Berjalan (Marquee)
 st.markdown(f"""
     <div class="marquee-container">
         <div class="marquee-text">
@@ -578,7 +608,7 @@ st.markdown(f"""
     </div>
 """, unsafe_allow_html=True)
 
-# --- PILIHAN INPUT ---
+# Pilihan Input (Radio Button)
 input_method = st.radio(
     "👉 Pilih Sumber Gambar:", 
     ("📂 Unggah Gambar Sendiri", "🧪 Gunakan Gambar Contoh (Demo)"), 
@@ -607,9 +637,8 @@ else:
         file_bytes_content = uploaded_file.getvalue()
         file_extension = uploaded_file.name.split('.')[-1].upper()
 
-# --- INFO APLIKASI (RESTORED CONTENT DENGAN TEMA DINAMIS) ---
+# Info Aplikasi (Expander)
 with st.expander("ℹ️ TENTANG APLIKASI & PANDUAN PENGGUNAAN (KLIK UNTUK BACA)", expanded=False):
-    # Desain Menggunakan HUD Cards agar Konsisten (Konten Asli)
     st.markdown(f"""
     <div class="hud-card" style="text-align: left; margin-bottom: 15px;">
         <h4 style="color: {current_t['primary']}; margin-bottom: 10px;">📖 DESKRIPSI SISTEM</h4>
@@ -654,14 +683,18 @@ with st.expander("ℹ️ TENTANG APLIKASI & PANDUAN PENGGUNAAN (KLIK UNTUK BACA)
         </div>
         """, unsafe_allow_html=True)
 
+# ==========================================
+# 9. EKSEKUSI PEMROSESAN GAMBAR
+# ==========================================
 if file_bytes_content is not None:
-    # PASS COLOR HEX TEMA KE FUNGSI PROCESS AGAR BOX MENGIKUTI WARNA
+    # Menjalankan fungsi process_image
     original, result, data_list, mask, gray_img, blurred_img, thresh_raw = process_image(
         file_bytes_content, blur_value, threshold_value, min_area, current_t['primary']
     )
     h, w, c = original.shape
     
     if data_list:
+        # Membuat Dataframe dari hasil deteksi
         df = pd.DataFrame(data_list)
         low, high = df["Area (px²)"].quantile(0.33), df["Area (px²)"].quantile(0.66)
         df["Jenis"] = df["Area (px²)"].apply(lambda x: "Kecil" if x < low else ("Sedang" if x < high else "Besar"))
@@ -683,15 +716,16 @@ if file_bytes_content is not None:
                 </div>
             """, unsafe_allow_html=True)
             
+        # Menampilkan Kartu Statistik
         render_hud_stat(c1, "TOTAL TERDETEKSI", len(df), "fas fa-layer-group", current_t['text'])
         render_hud_stat(c2, "OBJEK KECIL", counts.get("Kecil", 0), "fas fa-compress-arrows-alt", current_t['primary'])
         render_hud_stat(c3, "OBJEK SEDANG", counts.get("Sedang", 0), "fas fa-expand", current_t['secondary'])
         render_hud_stat(c4, "OBJEK BESAR", counts.get("Besar", 0), "fas fa-expand-arrows-alt", "#000000" if "Clean" in st.session_state.selected_theme_name or "Blue Cat" in st.session_state.selected_theme_name or "Cute Kitty" in st.session_state.selected_theme_name or "Luxury" in st.session_state.selected_theme_name else "#ffffff")
 
-        # --- TABS SECTION ---
+        # --- TABS VISUALISASI ---
         tab1, tab2, tab3 = st.tabs(["👁️ VISUALISASI", "📈 ANALISIS", "💾 DATA MENTAH"])
         
-        # === TAB 1: VISUALISASI ===
+        # TAB 1: GAMBAR HASIL
         with tab1:
             st.markdown("<div class='hud-card'>", unsafe_allow_html=True)
             with st.expander("🔻 DETAIL ALUR PREPROCESSING (KLIK UNTUK BUKA/TUTUP)", expanded=True):
@@ -709,12 +743,11 @@ if file_bytes_content is not None:
             col_r2.image(result, caption="6. OUTPUT AKHIR (BOUNDING BOX + CONTOUR)", use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
-        # === TAB 2: ANALISIS (GRAFIK DINAMIS) ===
+        # TAB 2: GRAFIK
         with tab2:
             st.markdown("<div class='hud-card'>", unsafe_allow_html=True)
             g1, g2 = st.columns(2)
             
-            # Warna grafik mengikuti tema
             graph_colors = [current_t['primary'], current_t['secondary'], '#94a3b8']
             
             # Pie Chart
@@ -726,7 +759,7 @@ if file_bytes_content is not None:
             wedges, texts, autotexts = ax1.pie(dist_data["Jumlah"], labels=dist_data["Kategori"], 
                                              autopct='%1.1f%%', startangle=90, colors=graph_colors,
                                              textprops={'color': current_t['text'], 'fontsize': 10, 'fontweight': 'bold'})
-            plt.setp(autotexts, size=12, weight="bold", color="black") # Text dalam pie tetap hitam agar terbaca
+            plt.setp(autotexts, size=12, weight="bold", color="black")
             g1.pyplot(fig1, use_container_width=True)
             
             # Bar Chart
@@ -736,13 +769,13 @@ if file_bytes_content is not None:
             bars = ax2.bar(dist_data["Kategori"], dist_data["Jumlah"], color=graph_colors, edgecolor=current_t['text'], alpha=0.8)
             ax2.tick_params(colors=current_t['text'])
             
-            # AMAN: Menggunakan current_t['text'] (HEX) untuk spine
             for spine in ax2.spines.values(): spine.set_edgecolor(current_t['text'])
                 
             ax2.grid(axis='y', linestyle='--', alpha=0.2, color=current_t['primary'])
             g2.pyplot(fig2, use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
+        # TAB 3: DATAFRAME
         with tab3:
             st.markdown("<div class='hud-card'>", unsafe_allow_html=True)
             st.dataframe(df, use_container_width=True, height=400, hide_index=True)
@@ -784,7 +817,7 @@ if file_bytes_content is not None:
             render_area_stat(sc3, "MAX (px²)", f"{area_max:,.0f}", "fas fa-arrow-up")
             render_area_stat(sc4, "RATA-RATA", f"{area_avg:,.0f}", "fas fa-chart-line")
 
-        # --- DOWNLOAD SECTION ---
+        # --- TOMBOL DOWNLOAD ---
         st.write("")
         d1, d2 = st.columns(2)
         with d1:
@@ -800,6 +833,7 @@ if file_bytes_content is not None:
     else:
         st.warning("⚠️ TIDAK ADA OBJEK TERDETEKSI. SESUAIKAN PARAMETER THRESHOLD.")
 else:
+    # Tampilan awal jika belum ada gambar
     st.markdown(f"""
     <div style='text-align: center; padding: 50px; opacity: 0.5;'>
         <h2 style='color:{current_t['primary']};'><i class='fas fa-power-off'></i> SISTEM SIAP DI GUNAKAN</h2>
